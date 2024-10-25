@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+digest() {
+  version=$(echo $1 | sed 's/v//')
+  sha=$(wget --quiet -O - https://github.com/fnando/ll/releases/download/v$version/ll-$2.tar.gz | shasum -a 256 | cut -f1 -d' ')
+  echo "$2: $sha"
+}
+
+if [[ "$1" == "" ]]; then
+  echo "Usage: $0 VERSION"
+  exit 1
+fi
+
+digest $1 aarch64-apple-darwin
+digest $1 x86_64-apple-darwin
+digest $1 x86_64-unknown-linux-gnu
