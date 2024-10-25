@@ -4,17 +4,17 @@ class Ll < Formula
   desc "A prettier terminal's ls command, with color and " \
        "https://www.nerdfonts.com/ icons."
   homepage "https://github.com/fnando/ll"
-  version "0.0.2"
+  version "0.0.3"
 
   if OS.mac? && Hardware::CPU.arm?
-    url "https://github.com/fnando/ll/releases/download/v0.0.2/ll-aarch64-apple-darwin.tar.gz"
-    sha256 "5f8ed107a59d6dabe0ddc583af3311c2a9052d4b16733ecaa7f1e2e91f36845c"
+    url "https://github.com/fnando/ll/releases/download/v0.0.3/ll-aarch64-apple-darwin.tar.gz"
+    sha256 "eca13dab994f7658918bca046e893182a098b5c8ccb1fadc6ad35b5d739aaffe"
   elsif OS.mac? && Hardware::CPU.intel?
-    url "https://github.com/fnando/ll/releases/download/v0.0.2/ll-x86_64-apple-darwin.tar.gz"
-    sha256 "81abaf6dfc90d38a1184699e0fb368d7f22a12a42999917b44fcf988769eb347"
+    url "https://github.com/fnando/ll/releases/download/v0.0.3/ll-x86_64-apple-darwin.tar.gz"
+    sha256 "649bd5e59cdf149c715f3324de70b1a42ba4f0ed257454b9231556ab9a029ede"
   elsif OS.linux? && Hardware::CPU.intel?
-    url "https://github.com/fnando/ll/releases/download/v0.0.2/ll-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "d51464cb46fcc29c875b3bc01b3490546b27666f82b8b9031d928b5871286731"
+    url "https://github.com/fnando/ll/releases/download/v0.0.3/ll-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "ea30523a2183a67268c7b4242102fff6ef5dfa3437ca9c498dbc20a06051587e"
   end
 
   def install
