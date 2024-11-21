@@ -14,3 +14,4 @@ fi
 digest $1 $2 aarch64-apple-darwin
 digest $1 $2 x86_64-apple-darwin
 digest $1 $2 x86_64-unknown-linux-gnu
+digest $1 $2 aarch64-unknown-linux-gnu

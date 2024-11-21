@@ -15,6 +15,9 @@ class Ll < Formula
   elsif OS.linux? && Hardware::CPU.intel?
     url "https://github.com/fnando/ll/releases/download/v#{version}/ll-x86_64-unknown-linux-gnu.tar.gz"
     sha256 "3df4e7aa9b835de3c92d2547953379004c9342e0b3d823b69885cef3bc1b71f6"
+  elsif OS.linux? && Hardware::CPU.arm?
+    url "https://github.com/fnando/ll/releases/download/v#{version}/ll-x86_64-unknown-linux-gnu.tar.gz"
+    sha256 "494ef82674c2c0bae9870422d04cc227383d2c543aa9a16b4929ec7968269b9e"
   end
 
   def install
