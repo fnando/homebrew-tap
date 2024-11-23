@@ -4,20 +4,20 @@ class Ll < Formula
   desc "A prettier terminal's ls command, with color and " \
        "https://www.nerdfonts.com/ icons."
   homepage "https://github.com/fnando/ll"
-  version "0.0.8"
+  version "0.0.9"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/fnando/ll/releases/download/v#{version}/ll-aarch64-apple-darwin.tar.gz"
-    sha256 "993f1a8da65c1e72c36d525efadcfa69679bb1d8d2347a5ec531e29d3ec57784"
+    sha256 "cc57d15c431160d602e2f194711d582695c6e7439793b39c48121da64ec06dba"
   elsif OS.mac? && Hardware::CPU.intel?
     url "https://github.com/fnando/ll/releases/download/v#{version}/ll-x86_64-apple-darwin.tar.gz"
-    sha256 "fe1da7f0ce1ce56843b89ddf0c852ea95e53d0f4af862271a9d598b222b55bed"
+    sha256 "c624a4bcc6f6e7eba4ec3d9fcc848af1f1ded33310a6c43bbeee17ea1fbacd1c"
   elsif OS.linux? && Hardware::CPU.intel?
     url "https://github.com/fnando/ll/releases/download/v#{version}/ll-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "3df4e7aa9b835de3c92d2547953379004c9342e0b3d823b69885cef3bc1b71f6"
+    sha256 "d0f3e0044b4434379c800437b6488ac67f3765fda4f72a32716de56bd8abea61"
   elsif OS.linux? && Hardware::CPU.arm?
     url "https://github.com/fnando/ll/releases/download/v#{version}/ll-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "494ef82674c2c0bae9870422d04cc227383d2c543aa9a16b4929ec7968269b9e"
+    sha256 "afed087a74607493f1435944d14720808549c9e861ad408178778c659201e6cf"
   end
 
   def install
