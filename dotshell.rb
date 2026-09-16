@@ -3,20 +3,20 @@
 class Dotshell < Formula
   desc "A command-line tool to start shell sessions with loaded .env files."
   homepage "https://github.com/fnando/dotshell"
-  version "0.0.1"
+  version "0.0.2"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/fnando/dotshell/releases/download/v#{version}/dotshell-aarch64-apple-darwin.tar.gz"
-    sha256 "5e4e8735869974bf088afc44b15cec8519b1496d63d85edc8a1521e2c7759108"
+    sha256 "08b5dd7ba066e81af97f266964995b539428337c71cb962bf10b44bfe2620034"
   elsif OS.mac? && Hardware::CPU.intel?
     url "https://github.com/fnando/dotshell/releases/download/v#{version}/dotshell-x86_64-apple-darwin.tar.gz"
-    sha256 "4921c301456d0a836f2866a4b5b2e8752958c5c281d67a16f5d3d25e70f06f92"
+    sha256 "1f4546214cb62d3a24bc8f6aa2b02059ffede593c87d3088238c03ba47461046"
   elsif OS.linux? && Hardware::CPU.intel?
     url "https://github.com/fnando/dotshell/releases/download/v#{version}/dotshell-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "fd7505261a7663af187af16aaa78c673b17d1a77668b985cfb469fdd779cf764"
+    sha256 "d7d7b3392a09efbdc8476b454d14b79d6c4e0e61d3ee51f4530134a3b701e3b1"
   elsif OS.linux? && Hardware::CPU.arm?
     url "https://github.com/fnando/dotshell/releases/download/v#{version}/dotshell-aarch64-unknown-linux-gnu.tar.gz"
-    sha256 "ecf078595e78474eded8171b1fd8272c1ba32d1fdcab77cee144a3cb4da616ab"
+    sha256 "ea2274bdc9329c92dbf68a1882f1d2c131be1e9a5fd6d10bf585e9bac54bfe63"
   end
 
   def install
