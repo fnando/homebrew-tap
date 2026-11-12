@@ -5,17 +5,17 @@ class Gatefold < Formula
        "missing metadata — lyrics, cover art, and artist images — without " \
        "overwriting anything you already have."
   homepage "https://github.com/fnando/gatefold"
-  version "0.0.10"
+  version "0.0.13"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/fnando/gatefold/releases/download/v#{version}/gatefold-aarch64-apple-darwin.tar.gz"
-    sha256 "3b297e438bb7ab14f6bc36f555775ebb8aaad89922bec94cfe67ccd1c8b1ef78"
+    sha256 "03317e23979f88ee0ed6aa56d452d8859cbd547ee156e7d76a4560d223171900"
   elsif OS.linux? && Hardware::CPU.intel?
     url "https://github.com/fnando/gatefold/releases/download/v#{version}/gatefold-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "6cd6d4f86e93f8ac504d9a0f693554da9d3da5ad87a25ba42fb91bd653f2f8e9"
+    sha256 "c07fcf0212702dfe8c92d3e00651032adfc7e446d65c87760afc4fe69db6e28a"
   elsif OS.linux? && Hardware::CPU.arm?
     url "https://github.com/fnando/gatefold/releases/download/v#{version}/gatefold-aarch64-unknown-linux-gnu.tar.gz"
-    sha256 "269b8786d57f6925923f1f973c3938bcd15ec0bfca87db6e9d9deaf697c0be62"
+    sha256 "7a41f1af9a6aad135b518fb7c0a28c469a612b3a18565ef2e4a290f65f390ba2"
   end
 
   def install
