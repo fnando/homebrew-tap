@@ -1,0 +1,149 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Updates formulas to the latest GitHub release of their projects.
+#
+# Usage: bin/update [--force] [--commit] [FORMULA...]
+#
+#   --force   Recompute checksums even if the version is already the latest.
+#   --commit  Create a git commit for each updated formula.
+#
+# Without FORMULA arguments, every *.rb file in the repo root is checked.
+
+require "json"
+require "open3"
+require "digest"
+require "net/http"
+require "uri"
+
+ROOT = File.expand_path("..", __dir__)
+
+def run(*cmd)
+  out, err, status = Open3.capture3(*cmd)
+  raise "#{cmd.join(' ')} failed: #{err.strip}" unless status.success?
+
+  out
+end
+
+def sha256_for(asset)
+  digest = asset["digest"].to_s
+  return digest.delete_prefix("sha256:") if digest.start_with?("sha256:")
+
+  sha256_from_download(asset["url"])
+end
+
+def sha256_from_download(url, limit = 10)
+  raise "too many redirects for #{url}" if limit.zero?
+
+  uri = URI(url)
+  Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+    request = Net::HTTP::Get.new(uri)
+    request["Accept"] = "application/octet-stream"
+    http.request(request) do |response|
+      case response
+      when Net::HTTPRedirection
+        return sha256_from_download(response["location"], limit - 1)
+      when Net::HTTPSuccess
+        digest = Digest::SHA256.new
+        size = 0
+        response.read_body do |chunk|
+          size += chunk.bytesize
+          digest << chunk
+        end
+        raise "empty download: #{url}" if size.zero?
+
+        return digest.hexdigest
+      else
+        raise "download failed (#{response.code}): #{url}"
+      end
+    end
+  end
+end
+
+def update(path, force:, commit:)
+  name = File.basename(path, ".rb")
+  source = File.read(path)
+
+  repo = source[%r{homepage "https://github\.com/([^/"]+/[^/"]+)"}, 1]
+  current = source[/^\s*version "([^"]+)"/, 1]
+
+  unless repo && current
+    warn "#{name}: skipping (no GitHub homepage or version)"
+    return true
+  end
+
+  release = JSON.parse(
+    run("gh", "release", "view", "--repo", repo, "--json", "tagName,assets")
+  )
+  latest = release["tagName"].delete_prefix("v")
+
+  if latest == current && !force
+    puts "#{name}: up to date (#{current})"
+    return true
+  end
+
+  if Gem::Version.new(latest) < Gem::Version.new(current)
+    warn "#{name}: latest release #{latest} is older than #{current}; skipping"
+    return true
+  end
+
+  assets = release["assets"].to_h { [_1["name"], _1] }
+  lines = source.lines
+
+  lines.each_with_index do |line, index|
+    if line =~ /^(\s*)version "[^"]+"/
+      lines[index] = %(#{$1}version "#{latest}"\n)
+    end
+
+    next unless line =~ %r{^\s*url ".*/([^/"]+)"}
+
+    filename = $1
+    asset = assets.fetch(filename) do
+      raise "#{name}: release v#{latest} has no asset named #{filename}"
+    end
+
+    sha_index = index + 1
+    unless lines[sha_index] =~ /^(\s*)sha256 "[0-9a-f]+"/
+      raise "#{name}: expected sha256 after url on line #{index + 1}"
+    end
+
+    lines[sha_index] = %(#{$1}sha256 "#{sha256_for(asset)}"\n)
+  end
+
+  updated = lines.join
+
+  if updated == source
+    puts "#{name}: up to date (#{current})"
+    return true
+  end
+
+  File.write(path, updated)
+  puts "#{name}: updated #{current} → #{latest}"
+
+  if commit
+    message = if latest == current
+                "Update checksums (#{name} #{latest})"
+              else
+                "Bump up version (#{name} #{latest})"
+              end
+    run("git", "-C", ROOT, "add", path)
+    run("git", "-C", ROOT, "commit", "--quiet", "-m", message)
+  end
+
+  true
+rescue StandardError => error
+  warn "#{name}: #{error.message}"
+  false
+end
+
+force = ARGV.delete("--force")
+commit = ARGV.delete("--commit")
+
+paths = if ARGV.empty?
+          Dir[File.join(ROOT, "*.rb")]
+        else
+          ARGV.map { File.join(ROOT, "#{File.basename(_1, '.rb')}.rb") }
+        end
+
+results = paths.sort.map { update(_1, force: !!force, commit: !!commit) }
+exit(results.all? ? 0 : 1)
