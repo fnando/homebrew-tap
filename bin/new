@@ -8,48 +8,13 @@
 #   REPO      "owner/name", or just "name" for fnando/name.
 #   --commit  Commit the new formula.
 
-require "json"
-require "open3"
-
-ROOT = File.expand_path("..", __dir__)
+require_relative "../lib/tap"
 
 PLATFORMS = {
   "aarch64-apple-darwin" => "OS.mac? && Hardware::CPU.arm?",
   "x86_64-unknown-linux-gnu" => "OS.linux? && Hardware::CPU.intel?",
   "aarch64-unknown-linux-gnu" => "OS.linux? && Hardware::CPU.arm?"
 }.freeze
-
-def run(*cmd)
-  out, err, status = Open3.capture3(*cmd)
-  abort "#{cmd.join(' ')} failed: #{err.strip}" unless status.success?
-
-  out
-end
-
-def wrap(text, width)
-  text.split.each_with_object([+""]) do |word, lines|
-    if lines.last.empty?
-      lines.last << word
-    elsif lines.last.size + word.size + 1 > width
-      lines.last << " "
-      lines << word.dup
-    else
-      lines.last << " " << word
-    end
-  end
-end
-
-def desc_lines(text)
-  text = text.to_s.strip.gsub("\\", "\\\\\\\\").gsub('"', '\"')
-  text = "TODO: describe this formula" if text.empty?
-
-  lines = wrap(text, 70)
-  lines.map.with_index do |line, index|
-    prefix = index.zero? ? "  desc " : "       "
-    suffix = index == lines.size - 1 ? "" : " \\"
-    %(#{prefix}"#{line}"#{suffix})
-  end
-end
 
 commit = ARGV.delete("--commit")
 repo = ARGV.first
@@ -58,14 +23,17 @@ abort "Usage: #{$PROGRAM_NAME} [--commit] REPO" unless repo
 
 repo = "fnando/#{repo}" unless repo.include?("/")
 name = repo.split("/").last
-path = File.join(ROOT, "#{name}.rb")
+path = File.join(Tap::ROOT, "#{name}.rb")
 
 abort "#{name}.rb already exists" if File.exist?(path)
 
-info = JSON.parse(run("gh", "repo", "view", repo, "--json", "description"))
-release = JSON.parse(
-  run("gh", "release", "view", "--repo", repo, "--json", "tagName,assets")
-)
+begin
+  description = Tap.description(repo)
+  release = Tap.latest_release(repo)
+rescue StandardError => error
+  abort error.message
+end
+
 version = release["tagName"].delete_prefix("v")
 assets = release["assets"].map { _1["name"] }
 
@@ -76,6 +44,7 @@ if platforms.empty?
         "(expected #{name}-<target>.tar.gz for one of: #{PLATFORMS.keys.join(', ')})"
 end
 
+description = "TODO: describe this formula" if description.empty?
 class_name = name.split(/[-_]/).map(&:capitalize).join
 
 branches = platforms.each_with_index.map do |(target, condition), index|
@@ -91,7 +60,7 @@ File.write(path, <<~RUBY)
   # frozen_string_literal: true
 
   class #{class_name} < Formula
-  #{desc_lines(info['description']).join("\n")}
+  #{Tap.desc_lines(description).join.chomp}
     homepage "https://github.com/#{repo}"
     version "#{version}"
 
@@ -110,14 +79,15 @@ RUBY
 
 puts "#{name}: created #{name}.rb (#{platforms.keys.join(', ')})"
 
-unless system(File.join(ROOT, "bin/update"), "--force", name, out: File::NULL)
+update = File.join(Tap::ROOT, "bin/update")
+unless system(update, "--force", name, out: File::NULL)
   File.delete(path)
   abort "#{name}: failed to compute checksums; removed #{name}.rb"
 end
 
 if commit
-  run("git", "-C", ROOT, "add", path)
-  run("git", "-C", ROOT, "commit", "--quiet", "-m", "Add #{name} (#{version}).")
+  Tap.run("git", "-C", Tap::ROOT, "add", path)
+  Tap.run("git", "-C", Tap::ROOT, "commit", "--quiet", "-m", "Add #{name} (#{version}).")
 end
 
 puts File.read(path)

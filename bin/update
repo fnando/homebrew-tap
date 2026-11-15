@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Updates formulas to the latest GitHub release of their projects.
+# Updates formulas to the latest GitHub release of their projects, and keeps
+# their descriptions in sync with the GitHub repository description.
 #
 # Usage: bin/update [--force] [--commit] [FORMULA...]
 #
@@ -10,20 +11,10 @@
 #
 # Without FORMULA arguments, every *.rb file in the repo root is checked.
 
-require "json"
-require "open3"
 require "digest"
 require "net/http"
 require "uri"
-
-ROOT = File.expand_path("..", __dir__)
-
-def run(*cmd)
-  out, err, status = Open3.capture3(*cmd)
-  raise "#{cmd.join(' ')} failed: #{err.strip}" unless status.success?
-
-  out
-end
+require_relative "../lib/tap"
 
 def sha256_for(asset)
   digest = asset["digest"].to_s
@@ -60,6 +51,57 @@ def sha256_from_download(url, limit = 10)
   end
 end
 
+# Replaces the `desc` statement (including continuation lines).
+def sync_description(lines, description)
+  return lines if description.empty?
+
+  start = lines.index { _1.match?(/^\s*desc "/) }
+  raise "no desc statement found" unless start
+
+  finish = start
+  finish += 1 while lines[finish].rstrip.end_with?("\\")
+
+  lines[0...start] + Tap.desc_lines(description) + lines[(finish + 1)..]
+end
+
+def sync_release(lines, name, release)
+  latest = release["tagName"].delete_prefix("v")
+  assets = release["assets"].to_h { [_1["name"], _1] }
+  lines = lines.dup
+
+  lines.each_with_index do |line, index|
+    if line =~ /^(\s*)version "[^"]+"/
+      lines[index] = %(#{$1}version "#{latest}"\n)
+    end
+
+    next unless line =~ %r{^\s*url ".*/([^/"]+)"}
+
+    filename = $1
+    asset = assets.fetch(filename) do
+      raise "release v#{latest} has no asset named #{filename}"
+    end
+
+    sha_index = index + 1
+    unless lines[sha_index] =~ /^(\s*)sha256 "[0-9a-f]+"/
+      raise "expected sha256 after url on line #{index + 1}"
+    end
+
+    lines[sha_index] = %(#{$1}sha256 "#{sha256_for(asset)}"\n)
+  end
+
+  lines
+end
+
+def commit_message(name, current, latest, version_changed, desc_changed, sha_changed)
+  if version_changed
+    "Bump up version (#{name} #{latest})"
+  elsif sha_changed
+    "Update checksums (#{name} #{current})"
+  elsif desc_changed
+    "Update description (#{name})"
+  end
+end
+
 def update(path, force:, commit:)
   name = File.basename(path, ".rb")
   source = File.read(path)
@@ -72,42 +114,19 @@ def update(path, force:, commit:)
     return true
   end
 
-  release = JSON.parse(
-    run("gh", "release", "view", "--repo", repo, "--json", "tagName,assets")
-  )
+  lines = sync_description(source.lines, Tap.description(repo))
+  desc_changed = lines.join != source
+
+  release = Tap.latest_release(repo)
   latest = release["tagName"].delete_prefix("v")
 
-  if latest == current && !force
-    puts "#{name}: up to date (#{current})"
-    return true
-  end
-
   if Gem::Version.new(latest) < Gem::Version.new(current)
-    warn "#{name}: latest release #{latest} is older than #{current}; skipping"
-    return true
-  end
-
-  assets = release["assets"].to_h { [_1["name"], _1] }
-  lines = source.lines
-
-  lines.each_with_index do |line, index|
-    if line =~ /^(\s*)version "[^"]+"/
-      lines[index] = %(#{$1}version "#{latest}"\n)
-    end
-
-    next unless line =~ %r{^\s*url ".*/([^/"]+)"}
-
-    filename = $1
-    asset = assets.fetch(filename) do
-      raise "#{name}: release v#{latest} has no asset named #{filename}"
-    end
-
-    sha_index = index + 1
-    unless lines[sha_index] =~ /^(\s*)sha256 "[0-9a-f]+"/
-      raise "#{name}: expected sha256 after url on line #{index + 1}"
-    end
-
-    lines[sha_index] = %(#{$1}sha256 "#{sha256_for(asset)}"\n)
+    warn "#{name}: latest release #{latest} is older than #{current}; " \
+         "skipping version check"
+  elsif latest != current || force
+    before = lines.join
+    lines = sync_release(lines, name, release)
+    sha_changed = lines.join != before
   end
 
   updated = lines.join
@@ -118,16 +137,20 @@ def update(path, force:, commit:)
   end
 
   File.write(path, updated)
-  puts "#{name}: updated #{current} → #{latest}"
+
+  version_changed = updated[/^\s*version "([^"]+)"/, 1] != current
+  changes = []
+  changes << "#{current} → #{latest}" if version_changed
+  changes << "checksums" if sha_changed && !version_changed
+  changes << "description" if desc_changed
+  puts "#{name}: updated #{changes.join(', ')}"
 
   if commit
-    message = if latest == current
-                "Update checksums (#{name} #{latest})"
-              else
-                "Bump up version (#{name} #{latest})"
-              end
-    run("git", "-C", ROOT, "add", path)
-    run("git", "-C", ROOT, "commit", "--quiet", "-m", message)
+    message = commit_message(
+      name, current, latest, version_changed, desc_changed, sha_changed
+    )
+    Tap.run("git", "-C", Tap::ROOT, "add", path)
+    Tap.run("git", "-C", Tap::ROOT, "commit", "--quiet", "-m", message)
   end
 
   true
@@ -140,9 +163,9 @@ force = ARGV.delete("--force")
 commit = ARGV.delete("--commit")
 
 paths = if ARGV.empty?
-          Dir[File.join(ROOT, "*.rb")]
+          Dir[File.join(Tap::ROOT, "*.rb")]
         else
-          ARGV.map { File.join(ROOT, "#{File.basename(_1, '.rb')}.rb") }
+          ARGV.map { File.join(Tap::ROOT, "#{File.basename(_1, '.rb')}.rb") }
         end
 
 results = paths.sort.map { update(_1, force: !!force, commit: !!commit) }
