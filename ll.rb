@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 class Ll < Formula
-  desc "A prettier terminal's ls command, with color and " \
-       "https://www.nerdfonts.com/ icons."
+  desc "A prettier terminal's ls command, with color and nerdfonts.com icons."
   homepage "https://github.com/fnando/ll"
   version "0.0.11"
 
