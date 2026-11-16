@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class Dotshell < Formula
-  desc "A command-line tool to start shell sessions with loaded .env files."
+  desc "A command-line tool to start a shell with environment variables " \
+       "defined through .env files."
   homepage "https://github.com/fnando/dotshell"
   version "0.0.3"
 
