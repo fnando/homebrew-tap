@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Notes < Formula
-  desc "Display notes like TODO and FIXME"
+  desc "A command-line tool to display markers like TODO and FIXME."
   homepage "https://github.com/fnando/notes"
   version "0.0.2"
 
