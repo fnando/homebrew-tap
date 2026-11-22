@@ -4,17 +4,17 @@ class Newcut < Formula
   desc "Know which albums you have, which you don't, and what's new from the " \
        "artists in your music library."
   homepage "https://github.com/fnando/newcut"
-  version "0.0.3"
+  version "0.0.4"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/fnando/newcut/releases/download/v#{version}/newcut-aarch64-apple-darwin.tar.gz"
-    sha256 "0563ad6e4096764cb95628fde5f869fa570c58466f1130968ab2aad07267b5c1"
+    sha256 "066f57b097ed6cad1241bbd1b8760e06b11263ebecc541606364bcf3681f0b27"
   elsif OS.linux? && Hardware::CPU.intel?
     url "https://github.com/fnando/newcut/releases/download/v#{version}/newcut-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "68888dd349d82edba71f42b106921c732eb1586a6c20651c4e03a3654ab9dd04"
+    sha256 "8932e434b79ba1bb08dba4a31b667882dd698645c2d3c0a62c71afbaa91b5b28"
   elsif OS.linux? && Hardware::CPU.arm?
     url "https://github.com/fnando/newcut/releases/download/v#{version}/newcut-aarch64-unknown-linux-gnu.tar.gz"
-    sha256 "cdab3f0ce67bcbbc460dc4e96e86385cab87a8acfcbbe76cbf36481cc96a44f2"
+    sha256 "2c9478bffbc65049a0471b9077f43e6d3d33b4338f9d5829fc6a9a842245c60b"
   end
 
   def install
