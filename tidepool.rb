@@ -3,17 +3,17 @@
 class Tidepool < Formula
   desc "tidepool keeps local copies of YouTube playlists in sync."
   homepage "https://github.com/fnando/tidepool"
-  version "0.0.14"
+  version "0.0.15"
 
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/fnando/tidepool/releases/download/v#{version}/tidepool-aarch64-apple-darwin.tar.gz"
-    sha256 "cd1ab2fe6d2579b75ca95660ed37de9b303aca36b5207f17322489df3a4b7d9f"
+    sha256 "57116d154bad860d069db2fff1d02219e2e27fa1e815b099fc1998fbb961dda5"
   elsif OS.linux? && Hardware::CPU.intel?
     url "https://github.com/fnando/tidepool/releases/download/v#{version}/tidepool-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "2c78e31e0979e625bca964481906b390f5c20151e5608a6ede6e2ebb6343c369"
+    sha256 "dde8221bad64e729b34c51665254607bfd9f6a1f49122dda092fbbd747e4e797"
   elsif OS.linux? && Hardware::CPU.arm?
     url "https://github.com/fnando/tidepool/releases/download/v#{version}/tidepool-aarch64-unknown-linux-gnu.tar.gz"
-    sha256 "aef020383e1af6793131cb9b715ccdda8e7616c72ea9106f9ac79e4de3259bb7"
+    sha256 "f84b5c08538a5e6dccf709d3fb3e948e440ee33970f3f7d0516d50d9d90a8c1d"
   end
 
   def install
